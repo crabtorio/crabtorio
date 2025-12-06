@@ -32,7 +32,7 @@ impl PlanetAI for AI {
         match msg {
             OrchestratorToPlanet::Asteroid(_) => Some(PlanetToOrchestrator::AsteroidAck {
                 planet_id: state.id(),
-                destroyed: false,
+                rocket: None,
             }),
             OrchestratorToPlanet::Sunray(sunray) => {
                 if let Some((cell, _)) = state.empty_cell() {
@@ -176,11 +176,11 @@ impl PlanetAI for AI {
 use common_game::components::planet::Planet;
 use common_game::components::planet::PlanetType;
 use common_game::protocols::messages;
-use std::sync::mpsc;
+use crossbeam_channel::{Receiver, Sender};
 pub fn create_planet(
-    rx_orchestrator: mpsc::Receiver<messages::OrchestratorToPlanet>,
-    tx_orchestrator: mpsc::Sender<messages::PlanetToOrchestrator>,
-    rx_explorer: mpsc::Receiver<messages::ExplorerToPlanet>,
+    rx_orchestrator: Receiver<messages::OrchestratorToPlanet>,
+    tx_orchestrator: Sender<messages::PlanetToOrchestrator>,
+    rx_explorer: Receiver<messages::ExplorerToPlanet>,
 ) -> Planet {
     let id = 6600;
     let ai = AI;
