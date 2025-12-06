@@ -34,9 +34,14 @@ impl PlanetAI for AI {
                 planet_id: state.id(),
                 destroyed: false,
             }),
-            OrchestratorToPlanet::Sunray(sunray) => Some(PlanetToOrchestrator::SunrayAck {
-                planet_id: state.id(),
-            }),
+            OrchestratorToPlanet::Sunray(sunray) => {
+                if let Some((cell, _)) = state.empty_cell() {
+                    cell.charge(sunray);
+                }
+                Some(PlanetToOrchestrator::SunrayAck {
+                    planet_id: state.id(),
+                })
+            }
             OrchestratorToPlanet::InternalStateRequest => {
                 Some(PlanetToOrchestrator::InternalStateResponse {
                     planet_id: state.id(),
