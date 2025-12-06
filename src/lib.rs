@@ -1,7 +1,10 @@
 use common_game::components::planet::{PlanetAI, PlanetState};
 use common_game::components::resource::BasicResourceType::*;
+use common_game::components::resource::ComplexResourceRequest::{
+    AIPartner, Diamond, Dolphin, Life, Robot, Water as WaterRequest,
+};
 use common_game::components::resource::{
-    BasicResource, Combinator, ComplexResourceType, Generator,
+    BasicResource, Combinator, ComplexResource, ComplexResourceType, Generator, GenericResource,
 };
 use common_game::components::rocket::Rocket;
 use common_game::protocols::messages::{
@@ -110,8 +113,55 @@ impl PlanetAI for AI {
                     Some(PlanetToExplorer::GenerateResourceResponse { resource: None })
                 }
             }
-            // ExplorerToPlanet::CombineResourceRequest missing
-            _ => None,
+            ExplorerToPlanet::CombineResourceRequest { explorer_id, msg } => match msg {
+                WaterRequest(hydrogen, oxygen) => Some(PlanetToExplorer::CombineResourceResponse {
+                    complex_response: {
+                        match combinator.make_water(hydrogen, oxygen, state.cell_mut(0)) {
+                            Ok(water) => Ok(ComplexResource::Water(water)),
+                            Err((s, hydrogen, oxygen)) => Err((
+                                s,
+                                GenericResource::BasicResources(BasicResource::Hydrogen(hydrogen)),
+                                GenericResource::BasicResources(BasicResource::Oxygen(oxygen)),
+                            )),
+                        }
+                    },
+                }),
+                Diamond(carbon1, carbon2) => Some(PlanetToExplorer::CombineResourceResponse {
+                    complex_response: Err((
+                        String::from("Diamond receipe not available on this planet"),
+                        GenericResource::BasicResources(BasicResource::Carbon(carbon1)),
+                        GenericResource::BasicResources(BasicResource::Carbon(carbon2)),
+                    )),
+                }),
+                Life(water, carbon) => Some(PlanetToExplorer::CombineResourceResponse {
+                    complex_response: Err((
+                        String::from("Life receipe not available on this planet"),
+                        GenericResource::ComplexResources(ComplexResource::Water(water)),
+                        GenericResource::BasicResources(BasicResource::Carbon(carbon)),
+                    )),
+                }),
+                Robot(silicon, life) => Some(PlanetToExplorer::CombineResourceResponse {
+                    complex_response: Err((
+                        String::from("Robot receipe not available on this planet"),
+                        GenericResource::BasicResources(BasicResource::Silicon(silicon)),
+                        GenericResource::ComplexResources(ComplexResource::Life(life)),
+                    )),
+                }),
+                Dolphin(water, life) => Some(PlanetToExplorer::CombineResourceResponse {
+                    complex_response: Err((
+                        String::from("Dolphin receipe not available on this planet"),
+                        GenericResource::ComplexResources(ComplexResource::Water(water)),
+                        GenericResource::ComplexResources(ComplexResource::Life(life)),
+                    )),
+                }),
+                AIPartner(robot, diamond) => Some(PlanetToExplorer::CombineResourceResponse {
+                    complex_response: Err((
+                        String::from("AIPartner receipe not available on this planet"),
+                        GenericResource::ComplexResources(ComplexResource::Robot(robot)),
+                        GenericResource::ComplexResources(ComplexResource::Diamond(diamond)),
+                    )),
+                }),
+            },
         }
     }
     fn start(&mut self, state: &PlanetState) {}
