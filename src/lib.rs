@@ -1,5 +1,5 @@
 use common_game::components::planet::{PlanetAI, PlanetState};
-use common_game::components::resource::BasicResourceType::*;
+use common_game::components::resource::BasicResourceType::{self, *};
 use common_game::components::resource::ComplexResourceRequest::{
     AIPartner, Diamond, Dolphin, Life, Robot, Water as WaterRequest,
 };
@@ -171,4 +171,37 @@ impl PlanetAI for AI {
     }
     fn start(&mut self, state: &PlanetState) {}
     fn stop(&mut self, state: &PlanetState) {}
+}
+
+use common_game::components::planet::Planet;
+use common_game::components::planet::PlanetType;
+use common_game::protocols::messages;
+use std::sync::mpsc;
+pub fn create_planet(
+    rx_orchestrator: mpsc::Receiver<messages::OrchestratorToPlanet>,
+    tx_orchestrator: mpsc::Sender<messages::PlanetToOrchestrator>,
+    rx_explorer: mpsc::Receiver<messages::ExplorerToPlanet>,
+) -> Planet {
+    let id = 6600;
+    let ai = AI;
+    let gen_rules = vec![
+        BasicResourceType::Hydrogen,
+        BasicResourceType::Oxygen,
+        BasicResourceType::Carbon,
+        BasicResourceType::Silicon,
+    ];
+    let comb_rules = vec![ComplexResourceType::Water];
+
+    match Planet::new(
+        id,
+        PlanetType::B,
+        Box::new(ai),
+        gen_rules,
+        comb_rules,
+        (rx_orchestrator, tx_orchestrator),
+        rx_explorer,
+    ) {
+        Ok(planet) => planet,
+        Err(s) => panic!("Planet creation failed, error: \n {}", s),
+    }
 }
