@@ -1,6 +1,7 @@
-#### Crabtorio's Planet
-*Type:* B
-*Energy cells:* 1
-*Resource generation rule:* Unbounded
-*Rocket:* None
-*Resource combination rule:* Water
+## Crabtorio's Planet
+**Id:** 6600
+**Type:** B
+**Energy cells:** 1
+**Generable resources:** Any
+**Rocket:** None
+**Resource combination rule:** Water
