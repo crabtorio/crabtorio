@@ -7,13 +7,29 @@ use common_game::components::resource::{
     BasicResource, Combinator, ComplexResource, ComplexResourceType, Generator, GenericResource,
 };
 use common_game::components::rocket::Rocket;
-use common_game::protocols::messages::{
-    ExplorerToPlanet, OrchestratorToPlanet, PlanetToExplorer, PlanetToOrchestrator,
-};
+use common_game::protocols::orchestrator_planet::{self, OrchestratorToPlanet};
+use common_game::protocols::planet_explorer::{self, ExplorerToPlanet, PlanetToExplorer};
 use std::collections::HashSet;
 
 pub struct AI;
 impl PlanetAI for AI {
+    fn handle_internal_state_req(
+        &mut self,
+        state: &mut PlanetState,
+        generator: &Generator,
+        combinator: &Combinator,
+    ) -> common_game::components::planet::DummyPlanetState {
+        state.to_dummy()
+    }
+    fn handle_sunray(
+        &mut self,
+        state: &mut PlanetState,
+        generator: &Generator,
+        combinator: &Combinator,
+        sunray: common_game::components::sunray::Sunray,
+    ) {
+        state.charge_cell(sunray);
+    }
     fn handle_asteroid(
         &mut self,
         state: &mut PlanetState,
@@ -21,35 +37,6 @@ impl PlanetAI for AI {
         combinator: &Combinator,
     ) -> Option<Rocket> {
         None
-    }
-    fn handle_orchestrator_msg(
-        &mut self,
-        state: &mut PlanetState,
-        generator: &Generator,
-        combinator: &Combinator,
-        msg: OrchestratorToPlanet,
-    ) -> Option<PlanetToOrchestrator> {
-        match msg {
-            OrchestratorToPlanet::Asteroid(_) => Some(PlanetToOrchestrator::AsteroidAck {
-                planet_id: state.id(),
-                rocket: None,
-            }),
-            OrchestratorToPlanet::Sunray(sunray) => {
-                if let Some((cell, _)) = state.empty_cell() {
-                    cell.charge(sunray);
-                }
-                Some(PlanetToOrchestrator::SunrayAck {
-                    planet_id: state.id(),
-                })
-            }
-            OrchestratorToPlanet::InternalStateRequest => {
-                Some(PlanetToOrchestrator::InternalStateResponse {
-                    planet_id: state.id(),
-                    planet_state: state.to_dummy(),
-                })
-            }
-            _ => None,
-        }
     }
     fn handle_explorer_msg(
         &mut self,
@@ -169,18 +156,15 @@ impl PlanetAI for AI {
             },
         }
     }
-    fn start(&mut self, state: &PlanetState) {}
-    fn stop(&mut self, state: &PlanetState) {}
 }
 
 use common_game::components::planet::Planet;
 use common_game::components::planet::PlanetType;
-use common_game::protocols::messages;
 use crossbeam_channel::{Receiver, Sender};
 pub fn create_planet(
-    rx_orchestrator: Receiver<messages::OrchestratorToPlanet>,
-    tx_orchestrator: Sender<messages::PlanetToOrchestrator>,
-    rx_explorer: Receiver<messages::ExplorerToPlanet>,
+    rx_orchestrator: Receiver<OrchestratorToPlanet>,
+    tx_orchestrator: Sender<orchestrator_planet::PlanetToOrchestrator>,
+    rx_explorer: Receiver<planet_explorer::ExplorerToPlanet>,
 ) -> Planet {
     let id = 6600;
     let ai = AI;
