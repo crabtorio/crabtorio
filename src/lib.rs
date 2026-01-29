@@ -9,6 +9,7 @@ use common_game::components::resource::{
 use common_game::components::rocket::Rocket;
 use common_game::protocols::orchestrator_planet::{self, OrchestratorToPlanet};
 use common_game::protocols::planet_explorer::{self, ExplorerToPlanet, PlanetToExplorer};
+use common_game::utils::ID;
 use std::collections::HashSet;
 
 pub struct AI;
@@ -162,11 +163,11 @@ use common_game::components::planet::Planet;
 use common_game::components::planet::PlanetType;
 use crossbeam_channel::{Receiver, Sender};
 pub fn create_planet(
+    id: ID,
     rx_orchestrator: Receiver<OrchestratorToPlanet>,
     tx_orchestrator: Sender<orchestrator_planet::PlanetToOrchestrator>,
     rx_explorer: Receiver<planet_explorer::ExplorerToPlanet>,
 ) -> Planet {
-    let id = 6600;
     let ai = AI;
     let gen_rules = vec![
         BasicResourceType::Hydrogen,
