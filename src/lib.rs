@@ -49,7 +49,8 @@ impl PlanetAI for AI {
         match msg {
             ExplorerToPlanet::AvailableEnergyCellRequest { explorer_id } => {
                 Some(PlanetToExplorer::AvailableEnergyCellResponse {
-                    available_cells: state.cells_count() as u32,
+                    available_cells: state.cells_iter().filter(|cell| cell.is_charged()).count()
+                        as u32,
                 })
             }
             ExplorerToPlanet::SupportedCombinationRequest { explorer_id } => {
